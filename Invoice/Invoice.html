@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>发票合并工具 - 专业文档工具</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary-fixed-dim": "#b0ceb2",
+            "surface-container-low": "#f0f3ff",
+            "on-surface": "#151c27",
+            "on-secondary-container": "#5e6460",
+            "tertiary-fixed": "#d7e7d5",
+            "surface-dim": "#d3daea",
+            "on-error-container": "#93000a",
+            "on-primary": "#ffffff",
+            "on-tertiary-container": "#2e3b2f",
+            "on-primary-fixed-variant": "#334d38",
+            "secondary-fixed": "#dfe4df",
+            "on-tertiary": "#ffffff",
+            "primary": "#4a654e",
+            "inverse-primary": "#b0ceb2",
+            "surface-container-lowest": "#ffffff",
+            "surface-bright": "#f9f9ff",
+            "on-tertiary-fixed": "#121e14",
+            "on-secondary": "#ffffff",
+            "surface-variant": "#dce2f3",
+            "secondary": "#5a605c",
+            "surface-container-high": "#e2e8f8",
+            "primary-fixed": "#cceace",
+            "on-primary-fixed": "#07200f",
+            "background": "#f9f9ff",
+            "inverse-on-surface": "#ebf1ff",
+            "error": "#ba1a1a",
+            "on-surface-variant": "#424842",
+            "tertiary-container": "#96a595",
+            "secondary-fixed-dim": "#c2c8c3",
+            "secondary-container": "#dce1dc",
+            "inverse-surface": "#2a313d",
+            "outline": "#737972",
+            "on-primary-container": "#233d29",
+            "on-error": "#ffffff",
+            "primary-container": "#8ba88e",
+            "tertiary": "#546254",
+            "surface-container": "#e7eefe",
+            "error-container": "#ffdad6",
+            "surface": "#f9f9ff",
+            "surface-container-highest": "#dce2f3",
+            "surface-tint": "#4a654e",
+            "outline-variant": "#c2c8c0",
+            "on-background": "#151c27"
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            full: "9999px"
+          },
+          spacing: {
+            xs: "8px",
+            sm: "12px",
+            md: "24px",
+            lg: "40px",
+            xl: "64px",
+            gutter: "24px"
+          },
+          fontFamily: {
+            sans: ["Manrope", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    html,
+    body {
+      min-height: 100%;
+      background-color: #f2f7f2;
+      color: #151c27;
+      font-family: "Manrope", sans-serif;
+    }
+
+    .material-symbols-outlined {
+      font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+      line-height: 1;
+    }
+
+    .custom-shadow {
+      box-shadow: 0 4px 20px rgba(45, 58, 46, 0.06);
+    }
+
+    .scroll-soft {
+      scrollbar-width: thin;
+      scrollbar-color: #b0ceb2 transparent;
+    }
+
+    .scroll-soft::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    .scroll-soft::-webkit-scrollbar-thumb {
+      background: #b0ceb2;
+      border-radius: 999px;
+    }
+
+    .action-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 36px;
+      border-radius: 8px;
+      padding: 0 12px;
+      font-size: 14px;
+      font-weight: 700;
+      transition: transform 150ms ease, background-color 150ms ease, opacity 150ms ease;
+      white-space: nowrap;
+    }
+
+    .action-btn:not(:disabled):hover {
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 900px) {
+      body {
+        height: auto;
+        overflow: auto;
+      }
+    }
+  </style>
+</head>
+<body class="flex h-screen flex-col overflow-hidden text-on-surface max-[900px]:h-auto max-[900px]:overflow-auto">
+  <header class="z-50 flex h-16 w-full shrink-0 items-center justify-between border-b border-outline-variant bg-surface px-6 md:px-16">
+    <div class="flex min-w-0 items-center gap-3">
+      <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-on-primary shadow-sm">
+        <span class="material-symbols-outlined text-[26px]">receipt_long</span>
+      </div>
+      <span class="truncate text-xl font-extrabold text-primary md:text-2xl">发票合并工具</span>
+    </div>
+    <div class="hidden items-center gap-2 text-sm text-on-surface-variant sm:flex">
+      <span class="material-symbols-outlined text-[18px] text-primary">lock</span>
+      <span>本地处理，无需登录</span>
+    </div>
+  </header>
+
+  <main class="flex min-h-0 flex-1 gap-6 bg-[#F2F7F2] p-3 md:p-6 max-[900px]:min-h-[calc(100vh-4rem)] max-[900px]:flex-col">
+    <section class="flex h-full w-[360px] shrink-0 flex-col gap-6 max-[900px]:h-auto max-[900px]:w-full">
+      <div class="custom-shadow flex min-h-0 flex-1 flex-col rounded-xl border border-[#D1DED1] bg-white p-5 max-[900px]:flex-none">
+        <div class="mb-4 border-b border-outline-variant pb-4">
+          <p class="mb-3 font-mono text-sm font-medium text-outline">每页拼贴数量</p>
+          <div class="flex gap-1 rounded-lg bg-surface-container-low p-1">
+            <button type="button" data-layout-count="2" class="flex-1 rounded-md bg-primary py-2 text-sm font-bold text-on-primary shadow-sm transition-all">2张</button>
+            <button type="button" data-layout-count="3" class="flex-1 rounded-md py-2 text-sm font-medium text-on-surface-variant transition-all hover:bg-surface-container">3张</button>
+            <button type="button" data-layout-count="4" class="flex-1 rounded-md py-2 text-sm font-medium text-on-surface-variant transition-all hover:bg-surface-container">4张</button>
+          </div>
+        </div>
+
+        <div class="mb-3 flex items-center justify-between gap-3">
+          <h2 id="uploadTitle" class="text-lg font-bold text-primary">已上传 0 个文件</h2>
+          <button id="clearBtn" type="button" class="rounded-md px-2 py-1 text-sm font-bold text-error transition hover:bg-error-container disabled:opacity-40">清空</button>
+        </div>
+
+        <input id="fileInput" class="hidden" type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp">
+
+        <div
+          id="dropzone"
+          class="mb-4 flex min-h-28 shrink-0 cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary-container bg-surface-container p-4 text-center transition-all hover:bg-primary-container/10"
+        >
+          <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-fixed text-primary transition-transform">
+            <span class="material-symbols-outlined text-2xl">add</span>
+          </div>
+          <div>
+            <p class="text-sm font-bold text-on-surface">点击或拖拽文件到此处</p>
+            <p class="mt-1 text-xs leading-5 text-outline">支持 PDF、JPG、JPEG、PNG、WEBP；单个文件不超过 20MB。</p>
+          </div>
+        </div>
+
+        <div id="fileList" class="scroll-soft min-h-[260px] flex-[1_1_300px] space-y-2 overflow-y-auto pr-1 max-[900px]:max-h-96 max-[900px]:min-h-[220px]"></div>
+      </div>
+    </section>
+
+    <section class="custom-shadow relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#D1DED1] bg-surface">
+      <div class="pointer-events-none absolute inset-0 bg-gradient-to-br from-primary-fixed/20 to-transparent"></div>
+
+      <div class="relative z-10 flex shrink-0 flex-wrap items-center justify-between gap-3 border-b border-outline-variant bg-surface-container-lowest/85 px-4 py-3 backdrop-blur md:px-6">
+        <div class="min-w-0">
+          <p class="text-xs font-bold uppercase text-outline">Preview</p>
+          <p id="statusText" class="text-xs font-medium text-on-surface-variant">等待上传文件</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button id="downloadBtn" data-action-button type="button" class="action-btn border border-primary text-primary disabled:pointer-events-none" disabled>
+            <span class="material-symbols-outlined text-[18px]">download</span>
+            下载
+          </button>
+          <button id="printBtn" data-action-button type="button" class="action-btn border border-primary text-primary disabled:pointer-events-none" disabled>
+            <span class="material-symbols-outlined text-[18px]">print</span>
+            打印
+          </button>
+          <button id="regenerateBtn" data-action-button type="button" class="action-btn border border-outline-variant text-on-surface-variant disabled:pointer-events-none" disabled>
+            <span class="material-symbols-outlined text-[18px]">refresh</span>
+            重新生成
+          </button>
+        </div>
+      </div>
+
+      <div id="previewContent" class="scroll-soft relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto bg-transparent"></div>
+
+      <div class="relative z-10 shrink-0 border-t border-outline-variant/30 bg-surface-container-lowest/70 px-4 py-2">
+        <p class="text-center text-[11px] leading-5 text-on-surface-variant opacity-80">
+          隐私声明：本工具无需登录，所有处理均在本地完成，我们不会在服务器留存您的任何发票数据。
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="pointer-events-none fixed left-1/2 top-20 z-[80] flex min-h-12 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-2 items-center justify-center rounded-lg px-4 py-3 text-center text-sm opacity-0 shadow-lg transition-all"></div>
+
+  <script src="./invoice-tool-core.js"></script>
+  <script src="./invoice-tool-app.js"></script>
+</body>
+</html>
